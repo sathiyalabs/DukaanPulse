@@ -2,6 +2,8 @@
 
 **Indic AI-Powered POS, Dynamic UPI Standee & Retail Growth Engine for Indian Merchants**
 
+**Live app:** [https://dukaanpulse.vercel.app/](https://dukaanpulse.vercel.app/)
+
 > **Paytm Build for India AI Hackathon · Chennai · Track 1: Merchant Growth AI**  
 > *Developed by Team Trio*
 
