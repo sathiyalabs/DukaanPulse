@@ -1,0 +1,50 @@
+{
+  "shop": "Marina Tea & Snacks",
+  "date": "2026-11-14",
+  "open": 720,
+  "close": 1200,
+  "goal": "count",
+  "threshold": 25,
+  "coverage": {
+    "2026-11-14": {
+      "state": "confirmed",
+      "start": 720,
+      "end": 1200
+    },
+    "2026-11-07": {
+      "state": "confirmed",
+      "start": 720,
+      "end": 1200
+    },
+    "2026-10-31": {
+      "state": "confirmed",
+      "start": 720,
+      "end": 1200
+    },
+    "2026-11-21": {
+      "state": "confirmed",
+      "start": 720,
+      "end": 1200
+    }
+  },
+  "exceptions": {},
+  "testDate": "2026-11-21",
+  "reviewDate": "2026-11-22",
+  "offer": {
+    "name": {
+      "en-IN": "Tea + snack combo",
+      "hi-IN": "चाय + नाश्ता कॉम्बो",
+      "ta-IN": "தேநீர் + சிற்றுண்டி காம்போ"
+    },
+    "available": true,
+    "price": 4000,
+    "cost": 2800,
+    "discount": 500,
+    "additional": 0,
+    "quantity": 40,
+    "limit": 20,
+    "budget": 10000,
+    "floor": 0,
+    "referenceVolume": 14
+  }
+}
