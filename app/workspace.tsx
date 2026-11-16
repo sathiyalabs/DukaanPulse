@@ -309,9 +309,6 @@ export default function Workspace() {
   const [settings, setSettings] = useState(false);
   const [reset, setReset] = useState(false);
   const [provider, setProvider] = useState<AppCtx["provider"]>(null);
-  const [sarvamKeyInput, setSarvamKeyInput] = useState("");
-  const [sarvamSaving, setSarvamSaving] = useState(false);
-  const [sarvamMsg, setSarvamMsg] = useState<{ text: string; ok: boolean } | null>(null);
   const lock = useRef(false);
   const main = useRef<HTMLElement>(null);
   const t = (key: string) => tr(l, key);
@@ -366,44 +363,6 @@ export default function Workspace() {
         behavior: "instant",
       });
     });
-  }
-
-  async function handleSaveSarvamKey(e: React.FormEvent) {
-    e.preventDefault();
-    if (!sarvamKeyInput.trim()) return;
-    setSarvamSaving(true);
-    setSarvamMsg(null);
-    try {
-      const res = await fetch("/api/config-sarvam", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ key: sarvamKeyInput.trim() }),
-      });
-      const data = (await res.json()) as { message?: string };
-      if (res.ok) {
-        setSarvamMsg({
-          text:
-            l === "ta-IN"
-              ? "சர்வம் API சாவி வெற்றிகரமாக இணைக்கப்பட்டது!"
-              : "Sarvam API Key connected successfully!",
-          ok: true,
-        });
-        setSarvamKeyInput("");
-        fetch("/api/health")
-          .then((r) => r.json() as Promise<AppCtx["provider"]>)
-          .then(setProvider)
-          .catch(() => {});
-      } else {
-        setSarvamMsg({
-          text: data.message || "Failed to update key",
-          ok: false,
-        });
-      }
-    } catch {
-      setSarvamMsg({ text: "Network error saving API key", ok: false });
-    } finally {
-      setSarvamSaving(false);
-    }
   }
 
   async function run(c: InputCommand) {
@@ -704,59 +663,14 @@ export default function Workspace() {
               >
                 <Sparkles size={15} style={{ color: "var(--accent)" }} />
                 <span>
-                  {l === "ta-IN"
-                    ? "சர்வம் AI API சாவி (Sarvam Key)"
-                    : "Connect Your Sarvam API Key"}
+                  {l === "ta-IN" ? "சர்வம் AI இணைப்பு" : "Sarvam AI connection"}
                 </span>
               </div>
-              <p className="muted" style={{ fontSize: 12, marginBottom: 10 }}>
-                {l === "ta-IN"
-                  ? "உங்களிடம் உள்ள சர்வம் API சாவியை உள்ளிட்டு நேரடி bulbul:v3 குரல், saaras:v3 பேச்சு அறிதல் & sarvam-105b வணிக பகுப்பாய்வை இயக்கவும்."
-                  : "Enter your Sarvam API key to activate live bulbul:v3 neural Tamil speech, saaras:v3 STT & sarvam-105b analytics."}
+              <p className="muted" style={{ fontSize: 12 }}>
+                {provider?.configured
+                  ? "Live AI is connected. Usage limits apply to chat and voice."
+                  : "Live AI is not connected. Contact the site owner to enable it. You can continue using the demo tools."}
               </p>
-              <form
-                onSubmit={handleSaveSarvamKey}
-                style={{ display: "flex", gap: 8, flexDirection: "column" }}
-              >
-                <div style={{ display: "flex", gap: 8 }}>
-                  <input
-                    type="password"
-                    placeholder="Enter Sarvam API key..."
-                    value={sarvamKeyInput}
-                    onChange={(e) => setSarvamKeyInput(e.target.value)}
-                    style={{
-                      flex: 1,
-                      padding: "8px 12px",
-                      borderRadius: 6,
-                      border: "1px solid var(--border)",
-                      background: "var(--surface)",
-                      color: "inherit",
-                      fontSize: 13,
-                    }}
-                  />
-                  <Button
-                    type="submit"
-                    disabled={sarvamSaving || !sarvamKeyInput.trim()}
-                  >
-                    {sarvamSaving
-                      ? "..."
-                      : l === "ta-IN"
-                      ? "இணைக்க"
-                      : "Connect"}
-                  </Button>
-                </div>
-                {sarvamMsg && (
-                  <div
-                    style={{
-                      fontSize: 12,
-                      color: sarvamMsg.ok ? "var(--good)" : "var(--warn)",
-                      fontWeight: 500,
-                    }}
-                  >
-                    {sarvamMsg.text}
-                  </div>
-                )}
-              </form>
             </div>
             <p className="small">
               {t(

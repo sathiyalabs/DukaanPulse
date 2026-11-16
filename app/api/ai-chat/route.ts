@@ -3,46 +3,44 @@ import {
   sameOrigin,
   ensureSarvamKeyLoaded,
   providerFetch,
+  scopeFor,
+  reserveUsage,
 } from "@/lib/server";
 import { answerStoreAIQuestion } from "@/lib/ai-assistant";
 
+import { z } from "zod";
+
+const inputSchema = z.object({
+  question: z.string().trim().min(1).max(1000),
+  lang: z.enum(["en-IN", "hi-IN", "ta-IN"]).default("ta-IN"),
+  storeContext: z.object({
+    shopName: z.string().max(160).optional(),
+    todaySales: z.number().finite().optional(),
+    todayBills: z.number().finite().optional(),
+    yesterdaySales: z.number().finite().optional(),
+    topProducts: z.array(z.object({ name: z.string().max(160), quantity: z.number().finite(), amount: z.number().finite() })).max(100).optional(),
+    zeroSaleProducts: z.array(z.string().max(160)).max(100).optional(),
+    inactiveDeadHours: z.array(z.string().max(80)).max(100).optional(),
+    weather: z.object({ temp: z.number().finite().optional(), condition: z.string().max(160).optional(), description: z.string().max(500).optional(), timeOfDay: z.string().max(80).optional() }).optional(),
+    currentTime: z.string().max(80).optional(),
+  }).default({}),
+});
+
 export async function POST(req: Request) {
   if (!sameOrigin(req)) return response({ error: "forbidden" }, 403);
+  let cookie: string | undefined;
+  const reply = (data: unknown, status = 200) => response(data, status, cookie);
   try {
-    const body = await req.json();
-    const {
-      question,
-      lang = "ta-IN",
-      storeContext = {},
-    } = body as {
-      question: string;
-      lang: "en-IN" | "hi-IN" | "ta-IN";
-      storeContext: {
-        shopName?: string;
-        todaySales?: number;
-        todayBills?: number;
-        yesterdaySales?: number;
-        topProducts?: Array<{ name: string; quantity: number; amount: number }>;
-        zeroSaleProducts?: string[];
-        inactiveDeadHours?: string[];
-        weather?: {
-          temp?: number;
-          condition?: string;
-          description?: string;
-          timeOfDay?: string;
-        };
-        currentTime?: string;
-      };
-    };
-
-    if (!question || typeof question !== "string") {
-      return response({ error: "invalidInput", message: "Question is required" }, 400);
-    }
-
+    const session = await scopeFor(req);
+    cookie = session.cookie;
+    const input = inputSchema.safeParse(await req.json());
+    if (!input.success) return reply({ error: "invalidInput" }, 400);
+    const { question, lang, storeContext } = input.data;
     const key = await ensureSarvamKeyLoaded();
 
     // If Sarvam is configured, call Sarvam 105b conversational model
     if (key) {
+      await reserveUsage(session.scope);
       try {
         const langName =
           lang === "hi-IN"
@@ -110,7 +108,7 @@ Instructions:
           }
 
           if (parsed?.answer) {
-            return response({
+            return reply({
               success: true,
               title: parsed.title || (lang === "ta-IN" ? "AI ஆலோசனை" : "AI Insights"),
               answer: parsed.answer,
@@ -120,7 +118,7 @@ Instructions:
               requestId: sarvamData.id || null,
             });
           } else if (rawContent) {
-            return response({
+            return reply({
               success: true,
               title: lang === "ta-IN" ? "AI பதில்" : "AI Response",
               answer: rawContent,
@@ -146,7 +144,7 @@ Instructions:
       lang,
     );
 
-    return response({
+    return reply({
       success: true,
       title: fallback.title,
       answer: fallback.activeAnswer,
@@ -154,7 +152,12 @@ Instructions:
       source: "fallback",
     });
   } catch (err) {
+    if (err instanceof Error && err.message === "rateLimit") {
+      return reply({ error: "rateLimit", fallback: true }, 429);
+    }
+
+    if (err instanceof SyntaxError) return reply({ error: "invalidInput" }, 400);
     console.error("AI chat route error:", err);
-    return response({ error: "serverError", message: "Failed to process question" }, 500);
+    return reply({ error: "serverError", message: "Failed to process question" }, 500);
   }
 }

@@ -308,7 +308,7 @@ export function getMemoryKey(): string {
 }
 
 export async function ensureSarvamKeyLoaded(): Promise<string> {
-  const current = getMemoryKey();
+  const current = getMemoryKey() || (env as unknown as { SARVAM_API_KEY?: string }).SARVAM_API_KEY || "";
   if (current) return current;
   try {
     const row = await db()

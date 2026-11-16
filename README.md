@@ -107,7 +107,7 @@ DukaanPulse/
 │   │   ├── ai-chat/route.ts      # Sarvam-105b chat completions with local fallback
 │   │   ├── ai-tts/route.ts       # Sarvam bulbul:v3 neural speech synthesis
 │   │   ├── ai-stt/route.ts       # Sarvam saaras:v3 speech-to-text
-│   │   ├── config-sarvam/route.ts# Key configuration (D1 DB + memory)
+│   │   ├── config-sarvam/route.ts# Public key changes disabled (403)
 │   │   ├── health/route.ts       # Provider health check & live verification
 │   │   └── state/route.ts        # D1 / SQLite workspace state persistence
 │   ├── billing-components.tsx    # POS Counter, Paytm QR modal & Soundbox
@@ -203,3 +203,7 @@ DukaanPulse includes an extensive automated test suite covering 41 unit and regr
 ## 👥 Team Trio
 
 - Developed with ❤️ for Indian neighbourhood merchants at the **Paytm Build for India AI Hackathon (Chennai)**.
+
+### Provider security
+
+Set `SARVAM_API_KEY` through the hosting provider's server-side secret configuration. Public visitors cannot change the deployment credential; `/api/config-sarvam` returns 403. Chat, transcription and speech share the existing 12-attempt workspace and 100-attempt deployment limits per UTC day. Keep persistent database storage configured so quotas survive server restarts.
